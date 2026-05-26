@@ -494,6 +494,19 @@ future:[
 ]
 };
 
+const future10x10=[
+[1,1,0,0,1,1,0,0,1,1],
+[1,1,0,0,1,1,0,0,1,1],
+[0,0,1,1,0,0,1,1,0,0],
+[0,0,1,1,0,0,1,1,0,0],
+[1,1,0,0,1,1,0,0,1,1],
+[1,1,0,0,1,1,0,0,1,1],
+[0,0,1,1,0,0,1,1,0,0],
+[0,0,1,1,0,0,1,1,0,0],
+[1,1,0,0,1,1,0,0,1,1],
+[1,1,0,0,1,1,0,0,1,1]
+];
+
 const final10x10=[
 [1,0,1,0,1,0,1,0,1,0],
 [0,1,0,1,0,1,0,1,0,1],
@@ -523,11 +536,12 @@ addLog('カメラ接続失敗');
 status.innerHTML='ERROR';
 });
 
-function sample(x,y){
+function sampleArea(x,y,r){
 let sum=0,count=0;
-for(let dx=-4;dx<=4;dx++){
-for(let dy=-4;dy<=4;dy++){
-let d=ctx.getImageData(x+dx,y+dy,1,1).data;
+let ri=Math.max(1,Math.floor(r));
+for(let dx=-ri;dx<=ri;dx++){
+for(let dy=-ri;dy<=ri;dy++){
+let d=ctx.getImageData(Math.round(x+dx),Math.round(y+dy),1,1).data;
 sum+=(d[0]+d[1]+d[2])/3;
 count++;
 }
@@ -546,10 +560,10 @@ analysisCtx.strokeStyle='rgba(255,0,0,.5)';
 analysisCtx.strokeRect(x*cell,y*cell,cell,cell);
 if(grid[y][x]===1){
 analysisCtx.fillStyle='rgba(255,40,40,.8)';
-analysisCtx.fillRect(x*cell+4,y*cell+4,cell-8,cell-8);
+analysisCtx.fillRect(x*cell+2,y*cell+2,cell-4,cell-4);
 }else{
 analysisCtx.fillStyle='rgba(0,0,0,.35)';
-analysisCtx.fillRect(x*cell+4,y*cell+4,cell-8,cell-8);
+analysisCtx.fillRect(x*cell+2,y*cell+2,cell-4,cell-4);
 }
 }
 }
@@ -561,16 +575,18 @@ canvas.width=video.videoWidth;
 canvas.height=video.videoHeight;
 ctx.drawImage(video,0,0);
 let w=canvas.width,h=canvas.height;
-let size=Math.min(w,h)*0.5;
+let ratio=sizeCount<=5?0.5:0.7;
+let size=Math.min(w,h)*ratio;
 let sx=(w-size)/2,sy=(h-size)/2;
 let cell=size/sizeCount;
+let r=Math.max(1,Math.floor(cell*0.25));
 let result=[];
 for(let y=0;y<sizeCount;y++){
 result[y]=[];
 for(let x=0;x<sizeCount;x++){
 let px=sx+x*cell+cell/2;
 let py=sy+y*cell+cell/2;
-let gray=sample(px,py);
+let gray=sampleArea(px,py,r);
 result[y][x]=gray<128?1:0;
 }
 }
@@ -637,7 +653,7 @@ unlocked.future=true;
 effect('heavy');
 randomCorrupt();
 status.innerHTML='404';
-document.getElementById('futureOverlay').classList.add('show');
+msg.innerHTML='ERROR CODE : 404 future';
 addLog('未来接続エラー');
 addLog('接続先が見つかりません');
 addLog('未来領域へのアクセス失敗');
@@ -685,6 +701,13 @@ return;
 }
 if(unlocked.future&&!unlocked.connect){
 let grid10=readGrid(10);
+if(same(grid10,future10x10)){
+document.getElementById('futureOverlay').classList.add('show');
+navigator.vibrate?.([200,100,200]);
+addLog('未来への鍵を検出');
+addLog('扉が開かれた...');
+return;
+}
 if(same(grid10,final10x10)){
 unlockPhase('connect');
 }
