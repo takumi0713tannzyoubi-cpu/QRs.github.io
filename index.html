@@ -215,23 +215,28 @@ opacity:.9;
 }
 
 
-/* 下部パネル：ステータス・アイテム・ログを横並びで小さく */
-.bottomPanel{
-display:flex;
-gap:8px;
-flex-shrink:0;
-}
 
-.statusBox{
+
+
+
+
+
+
+
+
+/* 接続状況バー：横幅いっぱい */
+.statusBar{
+display:flex;
+justify-content:space-between;
+align-items:center;
 border:1px solid #551111;
-padding:8px 10px;
+padding:6px 12px;
 background:#080808;
 flex-shrink:0;
 }
 
 .bigStatus{
-font-size:clamp(20px,6vw,36px);
-margin-top:4px;
+font-size:clamp(18px,5vw,30px);
 text-shadow:0 0 12px red;
 animation:glitch .25s infinite;
 }
@@ -240,6 +245,12 @@ animation:glitch .25s infinite;
 25%{transform:translateX(-2px)}
 50%{transform:translateX(2px)}
 75%{transform:translateX(-1px)}
+}
+
+.bottomPanel{
+display:flex;
+gap:8px;
+flex-shrink:0;
 }
 
 .unlocks{
@@ -258,9 +269,7 @@ background:#090909;
 font-size:11px;
 }
 
-.lock{
-color:#777;
-}
+.lock{ color:#777; }
 
 .online{
 color:#ff4040;
@@ -269,7 +278,7 @@ text-shadow:0 0 8px red;
 
 .log{
 flex:1;
-overflow:auto;
+overflow:hidden;
 font-size:10px;
 line-height:1.6;
 padding:8px;
@@ -295,6 +304,42 @@ opacity:.7;
 flex-shrink:0;
 }
 
+#futureOverlay{
+display:none;
+position:absolute;
+inset:0;
+z-index:10;
+background:rgba(0,0,0,.85);
+justify-content:center;
+align-items:center;
+flex-direction:column;
+text-align:center;
+cursor:pointer;
+padding:20px;
+}
+
+#futureOverlay.show{
+display:flex;
+}
+
+.futureText{
+font-size:clamp(28px,9vw,56px);
+text-shadow:0 0 20px red;
+animation:glitch .2s infinite;
+line-height:1.3;
+}
+
+.futureSub{
+margin-top:16px;
+font-size:12px;
+opacity:.6;
+letter-spacing:2px;
+animation:blink 1s step-end infinite;
+}
+
+@keyframes blink{
+50%{opacity:0;}
+}
 </style>
 </head>
 <body>
@@ -312,15 +357,15 @@ flex-shrink:0;
     接続要求確認 / 対象インスタンス：《 DENDROBIUM 》
   </div>
 
-  <!-- カメラエリアを中央メインに配置 -->
+
+
+
+  <!-- カメラエリア（未来オーバーレイ含む） -->
   <div class="cameraArea">
 
     <video id="video" autoplay playsinline></video>
-
     <div class="scanLine"></div>
-
     <div class="cameraFeedLabel">LIVE ANALYSIS FEED</div>
-
     <canvas id="analysisCanvas"></canvas>
 
     <div class="target">
@@ -330,16 +375,23 @@ flex-shrink:0;
       <div class="corner c4"></div>
     </div>
 
+    <!-- 未来オーバーレイ：タップで閉じる -->
+    <div id="futureOverlay" onclick="closeFutureOverlay()">
+      <div class="futureText">ERROR CODE : 404<br>未来を切り開け</div>
+      <div class="futureSub">— TAP TO CONTINUE —</div>
+    </div>
 
   </div>
 
-  <!-- 下部：ステータス + アンロック状況 + ログ を横並び -->
-  <div class="bottomPanel">
+  <!-- 接続状況バー：横幅いっぱい -->
+  <div class="statusBar">
+    <div style="font-size:10px;opacity:.7;">接続状況</div>
+    <div id="mainStatus" class="bigStatus">ERROR</div>
+    <div style="font-size:10px;opacity:.4;">SYS-001</div>
+  </div>
 
-    <div class="statusBox">
-      <div style="font-size:10px;">接続状況</div>
-      <div id="mainStatus" class="bigStatus">ERROR</div>
-    </div>
+  <!-- 下部：アンロック状況 + ログ を横並び -->
+  <div class="bottomPanel">
 
     <div class="unlocks">
       <div class="item">
@@ -580,6 +632,18 @@ msg.innerHTML='CAMERA ACCESS 解放 / 5×5ボードを回収してください';
 addLog('視覚解析レイヤー接続');
 addLog('カメラアクセス許可');
 }
+if(name==='future'&&!unlocked.future){
+unlocked.future=true;
+effect('heavy');
+randomCorrupt();
+status.innerHTML='404';
+document.getElementById('futureOverlay').classList.add('show');
+addLog('未来接続エラー');
+addLog('接続先が見つかりません');
+addLog('未来領域へのアクセス失敗');
+addLog('通信レイヤー崩壊');
+addLog('存在しない接続先');
+}
 if(name==='visual'&&!unlocked.visual){
 unlocked.visual=true;
 visual.innerHTML='ONLINE';
@@ -588,18 +652,7 @@ msg.innerHTML='VISUAL LINK 解放 / 残りのボードを回収してくださ�
 addLog('映像リンク確立');
 addLog('通信障害を迂回');
 }
-if(name==='future'&&!unlocked.future){
-unlocked.future=true;
-effect('heavy');
-randomCorrupt();
-status.innerHTML='404';
-msg.innerHTML='ERROR CODE : 404 future / 未来を切り開け';
-addLog('未来接続エラー');
-addLog('接続先が見つかりません');
-addLog('未来領域へのアクセス失敗');
-addLog('通信レイヤー崩壊');
-addLog('存在しない接続先');
-}
+
 if(name==='connect'&&!unlocked.connect){
 unlocked.connect=true;
 effect('heavy');
@@ -615,7 +668,10 @@ navigator.vibrate?.([100,50,100,50,300]);
 }
 }
 
-
+function closeFutureOverlay(){
+document.getElementById('futureOverlay').classList.remove('show');
+msg.innerHTML='ERROR CODE : 404 future / 未来を切り開け';
+}
 
 function checkPanel(){
 if(!unlocked.future){
