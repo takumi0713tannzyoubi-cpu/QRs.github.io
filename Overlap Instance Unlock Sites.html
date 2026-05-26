@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Overlap Instance</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+}
+
+body{
+background:#050505;
+color:#ff4040;
+font-family:'Share Tech Mono',monospace;
+height:100vh;
+overflow:hidden;
+padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+}
+
+body.flash{
+animation:screenFlash .25s;
+}
+
+@keyframes screenFlash{
+0%{filter:brightness(1)}
+50%{filter:brightness(3)}
+100%{filter:brightness(1)}
+}
+
+body.noiseBurst:after{
+content:"";
+position:fixed;
+inset:0;
+background:url('https://upload.wikimedia.org/wikipedia/commons/7/76/1k_Dissolve_Noise_Texture.png');
+mix-blend-mode:screen;
+animation:noise .08s infinite;
+opacity:.35;
+pointer-events:none;
+z-index:999;
+}
+
+@keyframes noise{
+0%{transform:translate(0,0)}
+25%{transform:translate(-4px,2px)}
+50%{transform:translate(3px,-2px)}
+75%{transform:translate(-2px,4px)}
+100%{transform:translate(0,0)}
+}
+
+body.connected{
+background:#101010;
+color:#ffffff;
+transition:1.5s;
+}
+
+body.connected:before{
+animation:none;
+opacity:.08;
+}
+
+body.connected .frame{
+box-shadow:
+0 0 30px #ffffff inset,
+0 0 30px rgba(255,255,255,.25);
+border-color:#ffffff;
+transition:1.5s;
+}
+
+body.connected .bigStatus{
+text-shadow:0 0 20px white;
+animation:none;
+}
+
+body:before{
+content:"";
+position:fixed;
+inset:0;
+background:repeating-linear-gradient(
+transparent 0px,
+rgba(255,255,255,.03) 2px,
+transparent 4px
+);
+pointer-events:none;
+animation:scan 8s linear infinite;
+opacity:.45;
+}
+
+@keyframes scan{
+from{transform:translateY(-100%)}
+to{transform:translateY(100%)}
+}
+
+.frame{
+height:100%;
+border:1px solid #ff3030;
+box-shadow:
+0 0 20px red inset,
+0 0 25px rgba(255,0,0,.3);
+padding:14px;
+display:flex;
+flex-direction:column;
+gap:12px;
+position:relative;
+z-index:1;
+}
+
+.header{
+display:flex;
+justify-content:space-between;
+border-bottom:1px solid #772222;
+padding-bottom:8px;
+font-size:13px;
+}
+
+.title{
+font-size:clamp(26px,8vw,48px);
+text-shadow:0 0 12px red;
+line-height:1.2;
+}
+
+.subtitle{
+font-size:12px;
+line-height:1.8;
+opacity:.9;
+}
+
+.cameraArea{
+position:relative;
+flex:1;
+display:flex;
+justify-content:center;
+align-items:center;
+overflow:hidden;
+margin-top:5px;
+}
+
+video{
+width:100%;
+height:100%;
+object-fit:cover;
+border:1px solid #772222;
+filter:brightness(.85) contrast(1.2);
+}
+
+.target{
+position:absolute;
+width:60vw;
+height:60vw;
+max-width:320px;
+max-height:320px;
+border:2px solid red;
+box-shadow:0 0 20px red;
+}
+
+.corner{
+position:absolute;
+width:24px;
+height:24px;
+border:3px solid red;
+}
+
+.c1{top:-3px;left:-3px;border-right:none;border-bottom:none;}
+.c2{top:-3px;right:-3px;border-left:none;border-bottom:none;}
+.c3{bottom:-3px;left:-3px;border-right:none;border-top:none;}
+.c4{bottom:-3px;right:-3px;border-left:none;border-top:none;}
+
+.statusBox{
+border:1px solid #551111;
+padding:12px;
+background:#080808;
+}
+
+.bigStatus{
+font-size:clamp(32px,10vw,64px);
+margin-top:8px;
+text-shadow:0 0 12px red;
+animation:glitch .25s infinite;
+}
+
+@keyframes glitch{
+25%{transform:translateX(-2px)}
+50%{transform:translateX(2px)}
+75%{transform:translateX(-1px)}
+}
+
+.unlocks{
+display:flex;
+flex-direction:column;
+gap:8px;
+}
+
+.item{
+display:flex;
+justify-content:space-between;
+padding:10px;
+border:1px solid #441111;
+background:#090909;
+}
+
+.lock{
+color:#777;
+}
+
+.online{
+color:#ff4040;
+text-shadow:0 0 8px red;
+}
+
+.log{
+height:120px;
+overflow:auto;
+font-size:11px;
+line-height:1.7;
+padding:10px;
+border:1px solid #331111;
+background:black;
+}
+
+.footer{
+display:flex;
+justify-content:space-between;
+font-size:10px;
+opacity:.7;
+}
+
+.center{
+text-align:center;
+}
+
+</style>
+</head>
+<body>
+
+<div class="frame">
+
+<div class="header">
+<div>▣ SYSTEM MESSAGE</div>
+<div>DENDROBIUM SYS-001</div>
+</div>
+
+<div class="title">
+『Overlap Instance』
+</div>
+
+<div class="subtitle">
+接続要求確認<br>
+対象インスタンス：《 DENDROBIUM 》
+</div>
+
+<div class="statusBox">
+<div>接続状況</div>
+<div id="mainStatus" class="bigStatus">ERROR</div>
+</div>
+
+<div class="unlocks">
+<div class="item">
+<div>TEXT CHAT</div>
+<div class="online">ONLINE</div>
+</div>
+
+<div class="item">
+<div>VOICE CHAT</div>
+<div id="voice" class="lock">LOCK</div>
+</div>
+
+<div class="item">
+<div>CAMERA ACCESS</div>
+<div id="camera" class="lock">LOCK</div>
+</div>
+
+<div class="item">
+<div>VISUAL LINK</div>
+<div id="visual" class="lock">LOCK</div>
+</div>
+</div>
+
+<div class="cameraArea">
+
+<video id="video" autoplay playsinline></video>
+
+<div class="target">
+<div class="corner c1"></div>
+<div class="corner c2"></div>
+<div class="corner c3"></div>
+<div class="corner c4"></div>
+</div>
+
+</div>
+
+<audio id="beep" preload="auto">
+<source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
+
+<audio id="noise" preload="auto">
+<source src="https://actions.google.com/sounds/v1/science_fiction/alien_digital_ping.ogg" type="audio/ogg">
+</audio>
+
+<div id="message" class="statusBox center">
+同期が必要です
+</div>
+
+<div id="log" class="log">
+> システム起動<br>
+> 接続要求確認<br>
+> 同期プロセス待機中...<br>
+</div>
+
+<div class="footer">
+<div>SESSION : 2026.08.07</div>
+<div>SYNCHRONIZATION REQUIRED</div>
+</div>
+
+</div>
+
+<canvas id="canvas" style="display:none"></canvas>
+
+<script>
+
+const video=document.getElementById('video');
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const log=document.getElementById('log');
+const beep=document.getElementById('beep');
+const noise=document.getElementById('noise');
+const msg=document.getElementById('message');
+const status=document.getElementById('mainStatus');
+
+function addLog(t){
+log.innerHTML += '> ' + t + '<br>';
+log.scrollTop = log.scrollHeight;
+}
+
+const patterns={
+
+voice:[
+[1,0,0,0,0],
+[0,0,1,0,0],
+[0,0,0,0,1],
+[0,1,0,0,0],
+[0,0,0,1,0]
+],
+
+camera:[
+[0,1,0,0,0],
+[0,0,0,1,0],
+[1,0,0,0,0],
+[0,0,1,0,0],
+[0,0,0,0,1]
+],
+
+visual:[
+[0,0,0,1,0],
+[1,0,0,0,0],
+[0,0,1,0,0],
+[0,0,0,0,1],
+[0,1,0,0,0]
+],
+
+future:[
+[1,0,0,0,1],
+[0,1,0,1,0],
+[0,0,1,0,0],
+[0,1,0,1,0],
+[1,0,0,0,1]
+]
+
+};
+
+const final10x10=[
+[1,0,1,0,1,0,1,0,1,0],
+[0,1,0,1,0,1,0,1,0,1],
+[1,0,1,0,1,0,1,0,1,0],
+[0,1,0,1,0,1,0,1,0,1],
+[1,0,1,0,1,0,1,0,1,0],
+[0,1,0,1,0,1,0,1,0,1],
+[1,0,1,0,1,0,1,0,1,0],
+[0,1,0,1,0,1,0,1,0,1],
+[1,0,1,0,1,0,1,0,1,0],
+[0,1,0,1,0,1,0,1,0,1]
+];
+
+let unlocked={
+voice:false,
+camera:false,
+visual:false,
+future:false,
+connect:false
+};
+
+navigator.mediaDevices.getUserMedia({
+video:{facingMode:'environment'}
+})
+.then(stream=>{
+
+video.srcObject=stream;
+
+addLog('カメラ接続成功');
+addLog('パネル認識待機中...');
+
+setInterval(checkPanel,700);
+
+})
+.catch(()=>{
+
+addLog('カメラ接続失敗');
+status.innerHTML='ERROR';
+
+});
+
+function sample(x,y){
+
+let sum=0;
+let count=0;
+
+for(let dx=-4;dx<=4;dx++){
+for(let dy=-4;dy<=4;dy++){
+
+let d=ctx.getImageData(x+dx,y+dy,1,1).data;
+
+sum+=(d[0]+d[1]+d[2])/3;
+count++;
+
+}
+}
+
+return sum/count;
+
+}
+
+function readGrid(sizeCount){
+
+if(video.videoWidth===0)return null;
+
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+
+ctx.drawImage(video,0,0);
+
+let w=canvas.width;
+let h=canvas.height;
+
+let size=Math.min(w,h)*0.5;
+
+let sx=(w-size)/2;
+let sy=(h-size)/2;
+
+let cell=size/sizeCount;
+
+let result=[];
+
+for(let y=0;y<sizeCount;y++){
+
+result[y]=[];
+
+for(let x=0;x<sizeCount;x++){
+
+let px=sx+x*cell+cell/2;
+let py=sy+y*cell+cell/2;
+
+let gray=sample(px,py);
+
+result[y][x]=gray<128?1:0;
+
+}
+}
+
+return result;
+
+}
+
+function same(a,b){
+
+if(!a || !b)return false;
+
+for(let y=0;y<a.length;y++){
+for(let x=0;x<a[y].length;x++){
+
+if(a[y][x]!==b[y][x]){
+return false;
+}
+
+}
+}
+
+return true;
+
+}
+
+function effect(type='normal'){
+
+beep.currentTime=0;
+beep.play().catch(()=>{});
+
+if(type==='heavy'){
+noise.currentTime=0;
+noise.play().catch(()=>{});
+}
+
+body.classList.add('flash');
+body.classList.add('noiseBurst');
+
+setTimeout(()=>{
+body.classList.remove('flash');
+},250);
+
+setTimeout(()=>{
+body.classList.remove('noiseBurst');
+},1200);
+
+}
+
+function randomCorrupt(){
+
+const words=[
+'SYNC ERROR',
+'CONNECTION LOST',
+'NULL INSTANCE',
+'ERROR 404',
+'RECOVERING',
+'WARNING'
+];
+
+let n=0;
+
+const timer=setInterval(()=>{
+
+status.innerHTML=
+words[
+Math.floor(Math.random()*words.length)
+];
+
+status.style.transform=
+`translate(${Math.random()*10-5}px,${Math.random()*6-3}px)`;
+
+n++;
+
+if(n>12){
+clearInterval(timer);
+status.style.transform='';
+}
+
+},80);
+
+}
+
+function unlockPhase(name){
+
+navigator.vibrate?.([100,50,100]);
+effect();
+
+if(name==='voice' && !unlocked.voice){
+
+unlocked.voice=true;
+
+voice.innerHTML='ONLINE';
+voice.className='online';
+
+status.innerHTML='RECOVERY';
+
+msg.innerHTML=`
+VOICE CHAT 解放<br><br>
+南京錠①を解除してください
+`;
+
+addLog('音声通信復旧');
+addLog('同期レイヤー回復');
+
+}
+
+if(name==='camera' && !unlocked.camera){
+
+unlocked.camera=true;
+
+camera.innerHTML='ONLINE';
+camera.className='online';
+
+msg.innerHTML=`
+CAMERA ACCESS 解放<br><br>
+5×5ボードを回収してください
+`;
+
+addLog('視覚解析レイヤー接続');
+addLog('カメラアクセス許可');
+
+}
+
+if(name==='visual' && !unlocked.visual){
+
+unlocked.visual=true;
+
+visual.innerHTML='ONLINE';
+visual.className='online';
+
+msg.innerHTML=`
+VISUAL LINK 解放<br><br>
+残りのボードを回収してください
+`;
+
+addLog('映像リンク確立');
+addLog('通信障害を迂回');
+
+}
+
+if(name==='future' && !unlocked.future){
+
+unlocked.future=true;
+
+effect('heavy');
+randomCorrupt();
+
+status.innerHTML='404';
+
+msg.innerHTML=`
+ERROR CODE : 404 future<br><br>
+未来を切り開け
+`;
+
+addLog('未来接続エラー');
+addLog('接続先が見つかりません');
+addLog('未来領域へのアクセス失敗');
+addLog('通信レイヤー崩壊');
+addLog('存在しない接続先');
+
+}
+
+if(name==='connect' && !unlocked.connect){
+
+unlocked.connect=true;
+
+effect('heavy');
+
+status.innerHTML='CONNECTED';
+
+document.body.classList.add('connected');
+
+msg.innerHTML=`
+<h2>SYNC COMPLETE</h2>
+<br>
+接続状況：CONNECTED
+<br><br>
+全同期プロセス完了
+`;
+
+addLog('最終同期完了');
+addLog('システム安定化');
+addLog('全ノイズ除去完了');
+addLog('全インスタンス接続成功');
+addLog('Overlap Instance 完了');
+
+navigator.vibrate?.([100,50,100,50,300]);
+
+}
+
+}
+
+function checkPanel(){
+
+if(!unlocked.future){
+
+let grid5=readGrid(5);
+
+for(let key in patterns){
+
+if(same(grid5,patterns[key])){
+unlockPhase(key);
+return;
+}
+
+}
+
+}
+
+if(unlocked.future && !unlocked.connect){
+
+let grid10=readGrid(10);
+
+if(same(grid10,final10x10)){
+unlockPhase('connect');
+}
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
