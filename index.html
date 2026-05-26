@@ -214,19 +214,6 @@ mix-blend-mode:screen;
 opacity:.9;
 }
 
-/* スキャンオーバーレイをカメラ上に重ねて表示 */
-#scanOverlay{
-position:absolute;
-top:10px;
-left:10px;
-right:10px;
-z-index:5;
-background:rgba(0,0,0,.75);
-backdrop-filter:blur(2px);
-padding:10px;
-border:1px solid #772222;
-text-align:center;
-}
 
 /* 下部パネル：ステータス・アイテム・ログを横並びで小さく */
 .bottomPanel{
@@ -343,12 +330,6 @@ flex-shrink:0;
       <div class="corner c4"></div>
     </div>
 
-    <!-- スキャンオーバーレイをカメラ上に重ねる -->
-    <div id="scanOverlay">
-      <div style="font-size:11px;opacity:.8;">PATTERN ANALYSIS</div>
-      <div id="scanText" style="font-size:22px;margin-top:6px;text-shadow:0 0 10px red;">SCANNING...</div>
-      <div style="margin-top:6px;font-size:10px;line-height:1.6;opacity:.8;">パネル解析中 / 同期データ確認中</div>
-    </div>
 
   </div>
 
@@ -421,12 +402,13 @@ const status=document.getElementById('mainStatus');
 const voice=document.getElementById('voice');
 const camera=document.getElementById('camera');
 const visual=document.getElementById('visual');
-const scanText=document.getElementById('scanText');
-const scanOverlay=document.getElementById('scanOverlay');
 
+const MAX_LOG=4;
 function addLog(t){
-log.innerHTML += '> ' + t + '<br>';
-log.scrollTop = log.scrollHeight;
+const lines=log.innerHTML.split('<br>').filter(l=>l.trim()!=='');
+lines.push('> '+t);
+if(lines.length>MAX_LOG)lines.splice(0,lines.length-MAX_LOG);
+log.innerHTML=lines.join('<br>')+'<br>';
 }
 
 const patterns={
@@ -481,7 +463,6 @@ video.srcObject=stream;
 addLog('カメラ接続成功');
 addLog('パネル認識待機中...');
 setInterval(()=>{
-showScanning();
 checkPanel();
 },700);
 })
@@ -634,24 +615,13 @@ navigator.vibrate?.([100,50,100,50,300]);
 }
 }
 
-function showScanning(text='SCANNING...'){
-scanText.innerHTML=text;
-scanOverlay.style.borderColor='#aa2222';
-scanOverlay.style.boxShadow='0 0 20px red inset';
-}
 
-function successScanning(){
-scanText.innerHTML='PATTERN VERIFIED';
-scanOverlay.style.borderColor='#ffffff';
-scanOverlay.style.boxShadow='0 0 30px white inset';
-}
 
 function checkPanel(){
 if(!unlocked.future){
 let grid5=readGrid(5);
 for(let key in patterns){
 if(same(grid5,patterns[key])){
-successScanning();
 unlockPhase(key);
 return;
 }
@@ -660,7 +630,6 @@ return;
 if(unlocked.future&&!unlocked.connect){
 let grid10=readGrid(10);
 if(same(grid10,final10x10)){
-successScanning();
 unlockPhase('connect');
 }
 }
