@@ -128,6 +128,47 @@ line-height:1.8;
 opacity:.9;
 }
 
+#scanOverlay{
+position:absolute;
+top:10px;
+left:10px;
+right:10px;
+z-index:5;
+background:rgba(0,0,0,.75);
+backdrop-filter:blur(2px);
+}
+
+.cameraFeedLabel{
+position:absolute;
+bottom:12px;
+left:12px;
+background:rgba(0,0,0,.7);
+padding:6px 10px;
+border:1px solid #772222;
+font-size:11px;
+letter-spacing:1px;
+z-index:4;
+text-shadow:0 0 8px red;
+}
+
+.scanLine{
+position:absolute;
+left:0;
+right:0;
+height:3px;
+background:red;
+box-shadow:0 0 20px red;
+animation:scanner 2s linear infinite;
+z-index:3;
+opacity:.8;
+}
+
+@keyframes scanner{
+0%{top:10%;}
+50%{top:90%;}
+100%{top:10%;}
+}
+
 .cameraArea{
 position:relative;
 flex:1;
@@ -278,9 +319,32 @@ text-align:center;
 </div>
 </div>
 
+<div id="scanOverlay" class="statusBox center">
+<div style="font-size:12px;opacity:.8;">
+PATTERN ANALYSIS
+</div>
+
+<div id="scanText" style="font-size:26px;margin-top:10px;text-shadow:0 0 10px red;">
+SCANNING...
+</div>
+
+<div style="margin-top:10px;font-size:11px;line-height:1.8;opacity:.8;">
+パネル解析中<br>
+同期データ確認中
+</div>
+</div>
+
 <div class="cameraArea">
 
 <video id="video" autoplay playsinline></video>
+
+<div class="scanLine"></div>
+
+<div class="cameraFeedLabel">
+LIVE ANALYSIS FEED
+</div>
+
+<canvas id="analysisCanvas" style="position:absolute;width:60vw;height:60vw;max-width:320px;max-height:320px;z-index:2;mix-blend-mode:screen;opacity:.9;"></canvas>
 
 <div class="target">
 <div class="corner c1"></div>
@@ -323,6 +387,8 @@ text-align:center;
 const video=document.getElementById('video');
 const canvas=document.getElementById('canvas');
 const ctx=canvas.getContext('2d');
+const analysisCanvas=document.getElementById('analysisCanvas');
+const analysisCtx=analysisCanvas.getContext('2d');
 const log=document.getElementById('log');
 const beep=document.getElementById('beep');
 const noise=document.getElementById('noise');
@@ -401,7 +467,10 @@ video.srcObject=stream;
 addLog('カメラ接続成功');
 addLog('パネル認識待機中...');
 
-setInterval(checkPanel,700);
+setInterval(()=>{
+showScanning();
+checkPanel();
+},700);
 
 })
 .catch(()=>{
@@ -428,6 +497,38 @@ count++;
 }
 
 return sum/count;
+
+}
+
+function drawAnalysis(grid,sizeCount){
+
+analysisCanvas.width=320;
+analysisCanvas.height=320;
+
+let cell=320/sizeCount;
+
+analysisCtx.clearRect(0,0,320,320);
+
+for(let y=0;y<sizeCount;y++){
+for(let x=0;x<sizeCount;x++){
+
+analysisCtx.strokeStyle='rgba(255,0,0,.5)';
+analysisCtx.strokeRect(x*cell,y*cell,cell,cell);
+
+if(grid[y][x]===1){
+
+analysisCtx.fillStyle='rgba(255,40,40,.8)';
+analysisCtx.fillRect(x*cell+4,y*cell+4,cell-8,cell-8);
+
+}else{
+
+analysisCtx.fillStyle='rgba(0,0,0,.35)';
+analysisCtx.fillRect(x*cell+4,y*cell+4,cell-8,cell-8);
+
+}
+
+}
+}
 
 }
 
@@ -467,6 +568,8 @@ result[y][x]=gray<128?1:0;
 
 }
 }
+
+drawAnalysis(result,sizeCount);
 
 return result;
 
@@ -657,6 +760,24 @@ navigator.vibrate?.([100,50,100,50,300]);
 
 }
 
+function showScanning(text='SCANNING...'){
+
+scanText.innerHTML=text;
+
+scanOverlay.style.borderColor='#aa2222';
+scanOverlay.style.boxShadow='0 0 20px red inset';
+
+}
+
+function successScanning(){
+
+scanText.innerHTML='PATTERN VERIFIED';
+
+scanOverlay.style.borderColor='#ffffff';
+scanOverlay.style.boxShadow='0 0 30px white inset';
+
+}
+
 function checkPanel(){
 
 if(!unlocked.future){
@@ -666,6 +787,8 @@ let grid5=readGrid(5);
 for(let key in patterns){
 
 if(same(grid5,patterns[key])){
+
+successScanning();
 unlockPhase(key);
 return;
 }
@@ -679,6 +802,8 @@ if(unlocked.future && !unlocked.connect){
 let grid10=readGrid(10);
 
 if(same(grid10,final10x10)){
+
+successScanning();
 unlockPhase('connect');
 }
 
