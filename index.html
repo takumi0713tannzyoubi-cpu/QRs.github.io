@@ -103,7 +103,7 @@ box-shadow:
 padding:14px;
 display:flex;
 flex-direction:column;
-gap:12px;
+gap:8px;
 position:relative;
 z-index:1;
 }
@@ -114,61 +114,24 @@ justify-content:space-between;
 border-bottom:1px solid #772222;
 padding-bottom:8px;
 font-size:13px;
+flex-shrink:0;
 }
 
 .title{
-font-size:clamp(26px,8vw,48px);
+font-size:clamp(22px,6vw,40px);
 text-shadow:0 0 12px red;
 line-height:1.2;
+flex-shrink:0;
 }
 
 .subtitle{
-font-size:12px;
-line-height:1.8;
-opacity:.9;
-}
-
-#scanOverlay{
-position:absolute;
-top:10px;
-left:10px;
-right:10px;
-z-index:5;
-background:rgba(0,0,0,.75);
-backdrop-filter:blur(2px);
-}
-
-.cameraFeedLabel{
-position:absolute;
-bottom:12px;
-left:12px;
-background:rgba(0,0,0,.7);
-padding:6px 10px;
-border:1px solid #772222;
 font-size:11px;
-letter-spacing:1px;
-z-index:4;
-text-shadow:0 0 8px red;
+line-height:1.6;
+opacity:.9;
+flex-shrink:0;
 }
 
-.scanLine{
-position:absolute;
-left:0;
-right:0;
-height:3px;
-background:red;
-box-shadow:0 0 20px red;
-animation:scanner 2s linear infinite;
-z-index:3;
-opacity:.8;
-}
-
-@keyframes scanner{
-0%{top:10%;}
-50%{top:90%;}
-100%{top:10%;}
-}
-
+/* カメラエリアを中央に大きく配置 */
 .cameraArea{
 position:relative;
 flex:1;
@@ -176,7 +139,7 @@ display:flex;
 justify-content:center;
 align-items:center;
 overflow:hidden;
-margin-top:5px;
+min-height:0;
 }
 
 video{
@@ -209,15 +172,79 @@ border:3px solid red;
 .c3{bottom:-3px;left:-3px;border-right:none;border-top:none;}
 .c4{bottom:-3px;right:-3px;border-left:none;border-top:none;}
 
+.scanLine{
+position:absolute;
+left:0;
+right:0;
+height:3px;
+background:red;
+box-shadow:0 0 20px red;
+animation:scanner 2s linear infinite;
+z-index:3;
+opacity:.8;
+}
+
+@keyframes scanner{
+0%{top:10%;}
+50%{top:90%;}
+100%{top:10%;}
+}
+
+.cameraFeedLabel{
+position:absolute;
+bottom:12px;
+left:12px;
+background:rgba(0,0,0,.7);
+padding:6px 10px;
+border:1px solid #772222;
+font-size:11px;
+letter-spacing:1px;
+z-index:4;
+text-shadow:0 0 8px red;
+}
+
+canvas#analysisCanvas{
+position:absolute;
+width:60vw;
+height:60vw;
+max-width:320px;
+max-height:320px;
+z-index:2;
+mix-blend-mode:screen;
+opacity:.9;
+}
+
+/* スキャンオーバーレイをカメラ上に重ねて表示 */
+#scanOverlay{
+position:absolute;
+top:10px;
+left:10px;
+right:10px;
+z-index:5;
+background:rgba(0,0,0,.75);
+backdrop-filter:blur(2px);
+padding:10px;
+border:1px solid #772222;
+text-align:center;
+}
+
+/* 下部パネル：ステータス・アイテム・ログを横並びで小さく */
+.bottomPanel{
+display:flex;
+gap:8px;
+flex-shrink:0;
+}
+
 .statusBox{
 border:1px solid #551111;
-padding:12px;
+padding:8px 10px;
 background:#080808;
+flex-shrink:0;
 }
 
 .bigStatus{
-font-size:clamp(32px,10vw,64px);
-margin-top:8px;
+font-size:clamp(20px,6vw,36px);
+margin-top:4px;
 text-shadow:0 0 12px red;
 animation:glitch .25s infinite;
 }
@@ -231,15 +258,17 @@ animation:glitch .25s infinite;
 .unlocks{
 display:flex;
 flex-direction:column;
-gap:8px;
+gap:4px;
+flex:1;
 }
 
 .item{
 display:flex;
 justify-content:space-between;
-padding:10px;
+padding:5px 8px;
 border:1px solid #441111;
 background:#090909;
+font-size:11px;
 }
 
 .lock{
@@ -252,13 +281,23 @@ text-shadow:0 0 8px red;
 }
 
 .log{
-height:120px;
+flex:1;
 overflow:auto;
-font-size:11px;
-line-height:1.7;
-padding:10px;
+font-size:10px;
+line-height:1.6;
+padding:8px;
 border:1px solid #331111;
 background:black;
+min-width:0;
+}
+
+.message{
+border:1px solid #551111;
+padding:6px 8px;
+background:#080808;
+font-size:11px;
+text-align:center;
+flex-shrink:0;
 }
 
 .footer{
@@ -266,10 +305,7 @@ display:flex;
 justify-content:space-between;
 font-size:10px;
 opacity:.7;
-}
-
-.center{
-text-align:center;
+flex-shrink:0;
 }
 
 </style>
@@ -278,107 +314,95 @@ text-align:center;
 
 <div class="frame">
 
-<div class="header">
-<div>▣ SYSTEM MESSAGE</div>
-<div>DENDROBIUM SYS-001</div>
-</div>
+  <div class="header">
+    <div>▣ SYSTEM MESSAGE</div>
+    <div>DENDROBIUM SYS-001</div>
+  </div>
 
-<div class="title">
-『Overlap Instance』
-</div>
+  <div class="title">『Overlap Instance』</div>
 
-<div class="subtitle">
-接続要求確認<br>
-対象インスタンス：《 DENDROBIUM 》
-</div>
+  <div class="subtitle">
+    接続要求確認 / 対象インスタンス：《 DENDROBIUM 》
+  </div>
 
-<div class="statusBox">
-<div>接続状況</div>
-<div id="mainStatus" class="bigStatus">ERROR</div>
-</div>
+  <!-- カメラエリアを中央メインに配置 -->
+  <div class="cameraArea">
 
-<div class="unlocks">
-<div class="item">
-<div>TEXT CHAT</div>
-<div class="online">ONLINE</div>
-</div>
+    <video id="video" autoplay playsinline></video>
 
-<div class="item">
-<div>VOICE CHAT</div>
-<div id="voice" class="lock">LOCK</div>
-</div>
+    <div class="scanLine"></div>
 
-<div class="item">
-<div>CAMERA ACCESS</div>
-<div id="camera" class="lock">LOCK</div>
-</div>
+    <div class="cameraFeedLabel">LIVE ANALYSIS FEED</div>
 
-<div class="item">
-<div>VISUAL LINK</div>
-<div id="visual" class="lock">LOCK</div>
-</div>
-</div>
+    <canvas id="analysisCanvas"></canvas>
 
-<div id="scanOverlay" class="statusBox center">
-<div style="font-size:12px;opacity:.8;">
-PATTERN ANALYSIS
-</div>
+    <div class="target">
+      <div class="corner c1"></div>
+      <div class="corner c2"></div>
+      <div class="corner c3"></div>
+      <div class="corner c4"></div>
+    </div>
 
-<div id="scanText" style="font-size:26px;margin-top:10px;text-shadow:0 0 10px red;">
-SCANNING...
-</div>
+    <!-- スキャンオーバーレイをカメラ上に重ねる -->
+    <div id="scanOverlay">
+      <div style="font-size:11px;opacity:.8;">PATTERN ANALYSIS</div>
+      <div id="scanText" style="font-size:22px;margin-top:6px;text-shadow:0 0 10px red;">SCANNING...</div>
+      <div style="margin-top:6px;font-size:10px;line-height:1.6;opacity:.8;">パネル解析中 / 同期データ確認中</div>
+    </div>
 
-<div style="margin-top:10px;font-size:11px;line-height:1.8;opacity:.8;">
-パネル解析中<br>
-同期データ確認中
-</div>
-</div>
+  </div>
 
-<div class="cameraArea">
+  <!-- 下部：ステータス + アンロック状況 + ログ を横並び -->
+  <div class="bottomPanel">
 
-<video id="video" autoplay playsinline></video>
+    <div class="statusBox">
+      <div style="font-size:10px;">接続状況</div>
+      <div id="mainStatus" class="bigStatus">ERROR</div>
+    </div>
 
-<div class="scanLine"></div>
+    <div class="unlocks">
+      <div class="item">
+        <div>TEXT CHAT</div>
+        <div class="online">ONLINE</div>
+      </div>
+      <div class="item">
+        <div>VOICE CHAT</div>
+        <div id="voice" class="lock">LOCK</div>
+      </div>
+      <div class="item">
+        <div>CAMERA</div>
+        <div id="camera" class="lock">LOCK</div>
+      </div>
+      <div class="item">
+        <div>VISUAL LINK</div>
+        <div id="visual" class="lock">LOCK</div>
+      </div>
+    </div>
 
-<div class="cameraFeedLabel">
-LIVE ANALYSIS FEED
-</div>
+    <div id="log" class="log">
+      > システム起動<br>
+      > 接続要求確認<br>
+      > 同期プロセス待機中...<br>
+    </div>
 
-<canvas id="analysisCanvas" style="position:absolute;width:60vw;height:60vw;max-width:320px;max-height:320px;z-index:2;mix-blend-mode:screen;opacity:.9;"></canvas>
+  </div>
 
-<div class="target">
-<div class="corner c1"></div>
-<div class="corner c2"></div>
-<div class="corner c3"></div>
-<div class="corner c4"></div>
-</div>
+  <div id="message" class="message">同期が必要です</div>
+
+  <div class="footer">
+    <div>SESSION : 2026.08.07</div>
+    <div>SYNCHRONIZATION REQUIRED</div>
+  </div>
 
 </div>
 
 <audio id="beep" preload="auto">
-<source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
 </audio>
 
 <audio id="noise" preload="auto">
-<source src="https://actions.google.com/sounds/v1/science_fiction/alien_digital_ping.ogg" type="audio/ogg">
+  <source src="https://actions.google.com/sounds/v1/science_fiction/alien_digital_ping.ogg" type="audio/ogg">
 </audio>
-
-<div id="message" class="statusBox center">
-同期が必要です
-</div>
-
-<div id="log" class="log">
-> システム起動<br>
-> 接続要求確認<br>
-> 同期プロセス待機中...<br>
-</div>
-
-<div class="footer">
-<div>SESSION : 2026.08.07</div>
-<div>SYNCHRONIZATION REQUIRED</div>
-</div>
-
-</div>
 
 <canvas id="canvas" style="display:none"></canvas>
 
@@ -394,6 +418,11 @@ const beep=document.getElementById('beep');
 const noise=document.getElementById('noise');
 const msg=document.getElementById('message');
 const status=document.getElementById('mainStatus');
+const voice=document.getElementById('voice');
+const camera=document.getElementById('camera');
+const visual=document.getElementById('visual');
+const scanText=document.getElementById('scanText');
+const scanOverlay=document.getElementById('scanOverlay');
 
 function addLog(t){
 log.innerHTML += '> ' + t + '<br>';
@@ -401,7 +430,6 @@ log.scrollTop = log.scrollHeight;
 }
 
 const patterns={
-
 voice:[
 [1,0,0,0,0],
 [0,0,1,0,0],
@@ -409,7 +437,6 @@ voice:[
 [0,1,0,0,0],
 [0,0,0,1,0]
 ],
-
 camera:[
 [0,1,0,0,0],
 [0,0,0,1,0],
@@ -417,7 +444,6 @@ camera:[
 [0,0,1,0,0],
 [0,0,0,0,1]
 ],
-
 visual:[
 [0,0,0,1,0],
 [1,0,0,0,0],
@@ -425,7 +451,6 @@ visual:[
 [0,0,0,0,1],
 [0,1,0,0,0]
 ],
-
 future:[
 [1,0,0,0,1],
 [0,1,0,1,0],
@@ -433,7 +458,6 @@ future:[
 [0,1,0,1,0],
 [1,0,0,0,1]
 ]
-
 };
 
 const final10x10=[
@@ -449,369 +473,199 @@ const final10x10=[
 [0,1,0,1,0,1,0,1,0,1]
 ];
 
-let unlocked={
-voice:false,
-camera:false,
-visual:false,
-future:false,
-connect:false
-};
+let unlocked={voice:false,camera:false,visual:false,future:false,connect:false};
 
-navigator.mediaDevices.getUserMedia({
-video:{facingMode:'environment'}
-})
+navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})
 .then(stream=>{
-
 video.srcObject=stream;
-
 addLog('カメラ接続成功');
 addLog('パネル認識待機中...');
-
 setInterval(()=>{
 showScanning();
 checkPanel();
 },700);
-
 })
 .catch(()=>{
-
 addLog('カメラ接続失敗');
 status.innerHTML='ERROR';
-
 });
 
 function sample(x,y){
-
-let sum=0;
-let count=0;
-
+let sum=0,count=0;
 for(let dx=-4;dx<=4;dx++){
 for(let dy=-4;dy<=4;dy++){
-
 let d=ctx.getImageData(x+dx,y+dy,1,1).data;
-
 sum+=(d[0]+d[1]+d[2])/3;
 count++;
-
 }
 }
-
 return sum/count;
-
 }
 
 function drawAnalysis(grid,sizeCount){
-
 analysisCanvas.width=320;
 analysisCanvas.height=320;
-
 let cell=320/sizeCount;
-
 analysisCtx.clearRect(0,0,320,320);
-
 for(let y=0;y<sizeCount;y++){
 for(let x=0;x<sizeCount;x++){
-
 analysisCtx.strokeStyle='rgba(255,0,0,.5)';
 analysisCtx.strokeRect(x*cell,y*cell,cell,cell);
-
 if(grid[y][x]===1){
-
 analysisCtx.fillStyle='rgba(255,40,40,.8)';
 analysisCtx.fillRect(x*cell+4,y*cell+4,cell-8,cell-8);
-
 }else{
-
 analysisCtx.fillStyle='rgba(0,0,0,.35)';
 analysisCtx.fillRect(x*cell+4,y*cell+4,cell-8,cell-8);
-
-}
-
 }
 }
-
+}
 }
 
 function readGrid(sizeCount){
-
 if(video.videoWidth===0)return null;
-
 canvas.width=video.videoWidth;
 canvas.height=video.videoHeight;
-
 ctx.drawImage(video,0,0);
-
-let w=canvas.width;
-let h=canvas.height;
-
+let w=canvas.width,h=canvas.height;
 let size=Math.min(w,h)*0.5;
-
-let sx=(w-size)/2;
-let sy=(h-size)/2;
-
+let sx=(w-size)/2,sy=(h-size)/2;
 let cell=size/sizeCount;
-
 let result=[];
-
 for(let y=0;y<sizeCount;y++){
-
 result[y]=[];
-
 for(let x=0;x<sizeCount;x++){
-
 let px=sx+x*cell+cell/2;
 let py=sy+y*cell+cell/2;
-
 let gray=sample(px,py);
-
 result[y][x]=gray<128?1:0;
-
 }
 }
-
 drawAnalysis(result,sizeCount);
-
 return result;
-
 }
 
 function same(a,b){
-
-if(!a || !b)return false;
-
+if(!a||!b)return false;
 for(let y=0;y<a.length;y++){
 for(let x=0;x<a[y].length;x++){
-
-if(a[y][x]!==b[y][x]){
-return false;
-}
-
+if(a[y][x]!==b[y][x])return false;
 }
 }
-
 return true;
-
 }
 
 function effect(type='normal'){
-
 beep.currentTime=0;
 beep.play().catch(()=>{});
-
 if(type==='heavy'){
 noise.currentTime=0;
 noise.play().catch(()=>{});
 }
-
-body.classList.add('flash');
-body.classList.add('noiseBurst');
-
-setTimeout(()=>{
-body.classList.remove('flash');
-},250);
-
-setTimeout(()=>{
-body.classList.remove('noiseBurst');
-},1200);
-
+document.body.classList.add('flash');
+document.body.classList.add('noiseBurst');
+setTimeout(()=>{document.body.classList.remove('flash');},250);
+setTimeout(()=>{document.body.classList.remove('noiseBurst');},1200);
 }
 
 function randomCorrupt(){
-
-const words=[
-'SYNC ERROR',
-'CONNECTION LOST',
-'NULL INSTANCE',
-'ERROR 404',
-'RECOVERING',
-'WARNING'
-];
-
+const words=['SYNC ERROR','CONNECTION LOST','NULL INSTANCE','ERROR 404','RECOVERING','WARNING'];
 let n=0;
-
 const timer=setInterval(()=>{
-
-status.innerHTML=
-words[
-Math.floor(Math.random()*words.length)
-];
-
-status.style.transform=
-`translate(${Math.random()*10-5}px,${Math.random()*6-3}px)`;
-
+status.innerHTML=words[Math.floor(Math.random()*words.length)];
+status.style.transform=`translate(${Math.random()*10-5}px,${Math.random()*6-3}px)`;
 n++;
-
-if(n>12){
-clearInterval(timer);
-status.style.transform='';
-}
-
+if(n>12){clearInterval(timer);status.style.transform='';}
 },80);
-
 }
 
 function unlockPhase(name){
-
 navigator.vibrate?.([100,50,100]);
 effect();
-
-if(name==='voice' && !unlocked.voice){
-
+if(name==='voice'&&!unlocked.voice){
 unlocked.voice=true;
-
 voice.innerHTML='ONLINE';
 voice.className='online';
-
 status.innerHTML='RECOVERY';
-
-msg.innerHTML=`
-VOICE CHAT 解放<br><br>
-南京錠①を解除してください
-`;
-
+msg.innerHTML='VOICE CHAT 解放 / 南京錠①を解除してください';
 addLog('音声通信復旧');
 addLog('同期レイヤー回復');
-
 }
-
-if(name==='camera' && !unlocked.camera){
-
+if(name==='camera'&&!unlocked.camera){
 unlocked.camera=true;
-
 camera.innerHTML='ONLINE';
 camera.className='online';
-
-msg.innerHTML=`
-CAMERA ACCESS 解放<br><br>
-5×5ボードを回収してください
-`;
-
+msg.innerHTML='CAMERA ACCESS 解放 / 5×5ボードを回収してください';
 addLog('視覚解析レイヤー接続');
 addLog('カメラアクセス許可');
-
 }
-
-if(name==='visual' && !unlocked.visual){
-
+if(name==='visual'&&!unlocked.visual){
 unlocked.visual=true;
-
 visual.innerHTML='ONLINE';
 visual.className='online';
-
-msg.innerHTML=`
-VISUAL LINK 解放<br><br>
-残りのボードを回収してください
-`;
-
+msg.innerHTML='VISUAL LINK 解放 / 残りのボードを回収してください';
 addLog('映像リンク確立');
 addLog('通信障害を迂回');
-
 }
-
-if(name==='future' && !unlocked.future){
-
+if(name==='future'&&!unlocked.future){
 unlocked.future=true;
-
 effect('heavy');
 randomCorrupt();
-
 status.innerHTML='404';
-
-msg.innerHTML=`
-ERROR CODE : 404 future<br><br>
-未来を切り開け
-`;
-
+msg.innerHTML='ERROR CODE : 404 future / 未来を切り開け';
 addLog('未来接続エラー');
 addLog('接続先が見つかりません');
 addLog('未来領域へのアクセス失敗');
 addLog('通信レイヤー崩壊');
 addLog('存在しない接続先');
-
 }
-
-if(name==='connect' && !unlocked.connect){
-
+if(name==='connect'&&!unlocked.connect){
 unlocked.connect=true;
-
 effect('heavy');
-
 status.innerHTML='CONNECTED';
-
 document.body.classList.add('connected');
-
-msg.innerHTML=`
-<h2>SYNC COMPLETE</h2>
-<br>
-接続状況：CONNECTED
-<br><br>
-全同期プロセス完了
-`;
-
+msg.innerHTML='SYNC COMPLETE / 接続状況：CONNECTED / 全同期プロセス完了';
 addLog('最終同期完了');
 addLog('システム安定化');
 addLog('全ノイズ除去完了');
 addLog('全インスタンス接続成功');
 addLog('Overlap Instance 完了');
-
 navigator.vibrate?.([100,50,100,50,300]);
-
 }
-
 }
 
 function showScanning(text='SCANNING...'){
-
 scanText.innerHTML=text;
-
 scanOverlay.style.borderColor='#aa2222';
 scanOverlay.style.boxShadow='0 0 20px red inset';
-
 }
 
 function successScanning(){
-
 scanText.innerHTML='PATTERN VERIFIED';
-
 scanOverlay.style.borderColor='#ffffff';
 scanOverlay.style.boxShadow='0 0 30px white inset';
-
 }
 
 function checkPanel(){
-
 if(!unlocked.future){
-
 let grid5=readGrid(5);
-
 for(let key in patterns){
-
 if(same(grid5,patterns[key])){
-
 successScanning();
 unlockPhase(key);
 return;
 }
-
 }
-
 }
-
-if(unlocked.future && !unlocked.connect){
-
+if(unlocked.future&&!unlocked.connect){
 let grid10=readGrid(10);
-
 if(same(grid10,final10x10)){
-
 successScanning();
 unlockPhase('connect');
 }
-
 }
-
 }
 
 </script>
-
 </body>
 </html>
