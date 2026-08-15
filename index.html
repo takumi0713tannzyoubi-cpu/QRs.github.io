@@ -12987,6 +12987,21 @@ var qrcode = function() {
 
 </div>
 
+<!-- scan confirmation modal -->
+<div class="modal-overlay" id="scanConfirmOverlay">
+  <div class="modal-receipt" style="text-align:center;">
+    <h3>この商品を追加しますか？</h3>
+    <div style="margin: 16px 0 20px;">
+      <div id="confirmName" style="font-size:17px; font-weight:700; margin-bottom:6px;"></div>
+      <div id="confirmPrice" style="font-family:'Orbitron',sans-serif; font-size:26px; color:var(--ink);"></div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-ghost" id="confirmNoBtn" style="flex:1;">いいえ</button>
+      <button class="btn btn-accent" id="confirmYesBtn" style="flex:1;">はい</button>
+    </div>
+  </div>
+</div>
+
 <!-- checkout modal -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal-receipt">
@@ -13102,6 +13117,8 @@ var qrcode = function() {
   let lastCode = null;
   let lastTime = 0;
   const COOLDOWN_MS = 1300;
+  let awaitingConfirm = false;
+  let pendingScan = null;
 
   async function startCamera(){
     try{
@@ -13124,6 +13141,7 @@ var qrcode = function() {
 
   function stopCamera(){
     scanning = false;
+    if(awaitingConfirm){ closeScanConfirm(); }
     if(stream){
       stream.getTracks().forEach(t=>t.stop());
       stream = null;
@@ -13166,6 +13184,11 @@ var qrcode = function() {
 
   function scanLoop(){
     if(!scanning) return;
+    if(awaitingConfirm){
+      // paused while the person answers the confirmation dialog
+      requestAnimationFrame(scanLoop);
+      return;
+    }
     if(video.readyState === video.HAVE_ENOUGH_DATA){
       const w = 480;
       const h = Math.round(w * video.videoHeight / video.videoWidth) || 360;
@@ -13179,18 +13202,40 @@ var qrcode = function() {
           const now = Date.now();
           if(!(code.data === lastCode && (now - lastTime) < COOLDOWN_MS)){
             const parsed = parseCode(code.data);
-            if(parsed){
-              addItem(parsed.name, parsed.price);
-              flashFrame();
-            }
             lastCode = code.data;
             lastTime = now;
+            if(parsed){
+              flashFrame();
+              showScanConfirm(parsed);
+            }
           }
         }
       }
     }
     requestAnimationFrame(scanLoop);
   }
+
+  function showScanConfirm(parsed){
+    awaitingConfirm = true;
+    pendingScan = parsed;
+    document.getElementById('confirmName').textContent = parsed.name;
+    document.getElementById('confirmPrice').textContent = money(parsed.price);
+    document.getElementById('scanConfirmOverlay').classList.add('show');
+  }
+
+  function closeScanConfirm(){
+    document.getElementById('scanConfirmOverlay').classList.remove('show');
+    awaitingConfirm = false;
+    pendingScan = null;
+  }
+
+  document.getElementById('confirmYesBtn').addEventListener('click', ()=>{
+    if(pendingScan){ addItem(pendingScan.name, pendingScan.price); }
+    closeScanConfirm();
+  });
+  document.getElementById('confirmNoBtn').addEventListener('click', ()=>{
+    closeScanConfirm();
+  });
 
   function flashFrame(){
     scanFrame.style.borderColor = '#c9ff9e';
